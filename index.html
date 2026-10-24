@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Innovation, Business Models & Entrepreneurship – Quiz Dashboard</title>
+<style>
+  :root{
+    --bg:#eef1f6; --surface:#ffffff; --ink:#1b2333; --muted:#5d6b82; --line:#d6dce8;
+    --accent:#2f4bd8; --accent-ink:#ffffff; --good:#17855a; --good-bg:#e2f4ec;
+    --bad:#c23b3b; --bad-bg:#fbe7e7; --sel:#e6ebff;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#10141d; --surface:#181e2b; --ink:#e8ecf5; --muted:#93a0b8; --line:#2b3447;
+      --accent:#7b92ff; --accent-ink:#0d1220; --good:#4cc593; --good-bg:#15332a;
+      --bad:#ff7f7f; --bad-bg:#3a1c1f; --sel:#232d52;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  h2{font-size:1.1rem;margin:0 0 12px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .stat b{display:block;font-size:1.6rem;line-height:1.2}
+  .stat span{color:var(--muted);font-size:.85rem}
+  .weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .week{display:block;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+  .week:has(input:checked){border-color:var(--accent);background:var(--sel)}
+  .week:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+  .week input{margin-right:6px}
+  .week .t{font-weight:600}
+  .week .n{color:var(--muted);font-size:.82rem;display:block;margin:2px 0 6px 22px}
+  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-left:22px}
+  .bar i{display:block;height:100%;background:var(--good)}
+  .opts{display:flex;flex-wrap:wrap;gap:16px;margin:14px 0}
+  .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  button{font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 16px;cursor:pointer}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  .hide{display:none}
+  /* quiz */
+  .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;color:var(--muted);font-size:.9rem}
+  .prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+  .prog i{display:block;height:100%;background:var(--accent);transition:width .25s}
+  .tag{display:inline-block;font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 8px;margin-bottom:8px}
+  .qtext{font-size:1.1rem;font-weight:600;margin:0 0 4px;white-space:pre-line}
+  .hint{color:var(--muted);font-size:.85rem;margin:0 0 12px}
+  .opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--surface)}
+  .opt:has(input:checked){border-color:var(--accent);background:var(--sel)}
+  .opt:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+  .opt.correct{border-color:var(--good);background:var(--good-bg)}
+  .opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+  .opt input{margin-top:4px}
+  .locked .opt{cursor:default}
+  .fb{margin:10px 0 0;font-weight:600}
+  .fb.ok{color:var(--good)} .fb.no{color:var(--bad)}
+  .score{font-size:2.4rem;font-weight:700;margin:0}
+  .rev{border-top:1px solid var(--line);padding:12px 0}
+  .rev small{color:var(--muted)}
+  .ok-t{color:var(--good)} .no-t{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- DASHBOARD -->
+  <section id="dash">
+    <h1>Innovation, Business Models &amp; Entrepreneurship</h1>
+    <p class="sub">Practice quiz built from the Week 1–8 assignments (80 questions).</p>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <h2>Choose weeks</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button id="allBtn" type="button">Select all</button>
+        <button id="noneBtn" type="button">Clear</button>
+      </div>
+      <div class="weeks" id="weeks"></div>
+
+      <div class="opts">
+        <label>Questions
+          <select id="count">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="40">40</option>
+            <option value="0" selected>All selected</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="shuffle" checked> Shuffle questions</label>
+        <label><input type="checkbox" id="instant" checked> Show answer after each question</label>
+      </div>
+      <div class="row">
+        <button class="primary" id="startBtn" type="button">Start quiz</button>
+        <button id="missedBtn" type="button">Practice missed questions</button>
+        <span id="startMsg" class="sub" style="margin:0"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Recent attempts</h2>
+      <div id="history"></div>
+      <div class="row" style="margin-top:10px"><button id="resetBtn" type="button">Reset progress</button></div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="hide">
+    <div class="top">
+      <span id="qCount"></span>
+      <span id="timer">0:00</span>
+      <button id="quitBtn" type="button">Quit</button>
+    </div>
+    <div class="prog"><i id="progBar" style="width:0"></i></div>
+    <div class="card" id="qCard"></div>
+    <div class="row">
+      <button class="primary" id="actBtn" type="button">Check answer</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="result" class="hide">
+    <div class="card">
+      <h2>Results</h2>
+      <p class="score" id="rScore"></p>
+      <p class="sub" id="rMeta"></p>
+      <table id="rWeeks"></table>
+      <div class="row" style="margin-top:14px">
+        <button class="primary" id="againBtn" type="button">Retry missed</button>
+        <button id="homeBtn" type="button">Back to dashboard</button>
+      </div>
+    </div>
+    <div class="card"><h2>Review</h2><div id="review"></div></div>
+  </section>
+
+</div>
+
+<script>
+/* ---------- Data ---------- */
+const S2 = ["Only Statement I is correct.","Only Statement II is correct.","Both the statements are correct.","Both the statements are incorrect."];
+const S4 = ["Both statements are false.","Statement 1 is true, and Statement 2 is false.","Both statements are true.","Statement 1 is false, and Statement 2 is true."];
+
+const WEEKS = {
+  1:"Innovation basics",
+  2:"Challenges & idea management",
+  3:"Experimentation & idea champions",
+  4:"Entrepreneurship & strategy",
+  5:"Technological innovation",
+  6:"Sustainable & social innovation",
+  7:"Intellectual property",
+  8:"Business models & incubation"
+};
+
+// w = week, q = question, o = options, a = correct option indexes (more than one = select all)
+const Q = [
+/* Week 1 */
+{w:1,q:"___________ is the specific tool of entrepreneurs, the means by which they exploit change as an opportunity for a different business or a different service.",o:["Design","Innovation","Marketing","Communication"],a:[1]},
+{w:1,q:"Which of the following are the three important I’s in the innovation process?",o:["Idea","Integration","Implementation","Industry","Impact"],a:[0,2,4]},
+{w:1,q:"As discussed in class, what would be the answer to this equation?\n(Idea + Implementation) → Invention;  Invention + Impact = ?",o:["Design","Innovation","Marketing","Management"],a:[1]},
+{w:1,q:"Select the correct statement/s.\nStatement 1: Innovation begins with curiosity.\nStatement 2: Innovation is always a smooth linear process.",o:S4,a:[1]},
+{w:1,q:"How do entrepreneurs represent resistance to change?",o:["Ignoring the Idea","Ignoring the chances of failure","Inertia","Ability to exude confidence."],a:[0,2]},
+{w:1,q:"Select the correct statement/s.\nStatement 1: Frugal innovation sees resource constraints not as a liability but as an opportunity.\nStatement 2: Frugal organizations don’t seek to wow customers with technically sophisticated products but instead strive to create good-quality solutions that deliver the greatest value to customers at the lowest cost.",o:S4,a:[2]},
+{w:1,q:"Which among the following can be considered as the breakthrough innovations?",o:["Development of steam engine","Development of wheel","Invention of fire","Evolution of mobile technology from 2G to 3G"],a:[0,1,2]},
+{w:1,q:"Select the INCORRECT statement.",o:["Design thinking is solution focused.","Design thinking is action-oriented.","Design thinking is human-centered.","Design thinking is product-centered."],a:[3]},
+{w:1,q:"Match the thinking hats (Table 1) with the perspective they represent (Table 2).\nTable 1: I White, II Black, III Red, IV Yellow, V Green, VI Blue\nTable 2: A Feelings/Intuition, B Manage Process, C Information, D Barriers, E Creativity/New Ideas, F Values and benefits",o:["I–C, II–D, III–A, IV–F, V–E, VI–B","I–D, II–B, III–F, IV–A, V–C, VI–E","I–C, II–A, III–F, IV–D, V–B, VI–E","I–D, II–F, III–A, IV–E, V–C, VI–B"],a:[0]},
+{w:1,q:"“Innovators face unknown unknowns” is the best description of which VUCA element?",o:["Complexity","Volatility","Ambiguity","Uncertainty"],a:[2]},
+
+/* Week 2 */
+{w:2,q:"The challenges of innovation are at two levels – individual and organisational. Pick out the challenges faced at the organizational level.",o:["Fear of Failure","Lack of internal heroes","Lack of role clarity","Lack of recognition for efforts","No innovation strategy"],a:[1,3,4]},
+{w:2,q:"Identify the missing X, Y and Z steps in innovation management.\nCollection of Ideas → X → Y → Z → Iterative Business Model",o:["Assessment of Ideas, Selection of Ideas, Prototyping","Brainstorming, Designing, Validation","Selection of Idea, Experimentation with Idea, Developing the Business model","Conducting research, designing the identity, Developing the beta version"],a:[2]},
+{w:2,q:"Select the correct statement regarding divergent thinking.",o:["The process of thinking that explores multiple possible solutions in order to generate creative ideas is divergent thinking.","Divergent thinking helps in finding solutions to a problem through deducing by applying established rules and logical reasoning.","It generally means the ability to give the “correct” answer to standard questions that do not require significant creativity.","The term divergent thinking is coined by Joy Paul Guilford."],a:[0]},
+{w:2,q:"Select the correct statement/s.\nStatement 1: The objective of the Idea Management System is to overcome resistance to change.\nStatement 2: The objective of the Idea Management System is to overcome the prediction disability.",o:S4,a:[2]},
+{w:2,q:"Select the key processes in the innovation programme.",o:["Idea Management","Buzz Creation","Implementing employee recreational activities","Vendor Management","Training and Development"],a:[0,1,4]},
+{w:2,q:"Who said, “if there are challenges and those challenges are difficult, then some interesting, innovative solutions will come.”?",o:["Elon Musk","Ratan Tata","Thomas Lockwood","Peter F Drucker"],a:[1]},
+{w:2,q:"The concept of the challenge book helps in developing the Idea Bank.",o:["The above statement is false.","The above statement is partially false.","The above statement is true.","The above statement is partially true."],a:[2]},
+{w:2,q:"Which source of challenge book is it when customers want high-quality and low-cost products?",o:["Feel the pain source.","Sense the wave source.","See the waste source.","Perceive the change source."],a:[0]},
+{w:2,q:"What are the three important dimensions (3Ps) of sustainability?",o:["Product","People","Participation","Planet","Profit","Process"],a:[1,3,4]},
+{w:2,q:"Natural resources, energy, technological resources, etc., are being wasted mindlessly. There is not enough power generation in India to meet the demands. An innovator is coming up with a solution to curb the problem of power generation. It is an example of which source of a challenge book?",o:["Feel the pain source","Sense the wave source","See the waste source","None of the above"],a:[2]},
+
+/* Week 3 */
+{w:3,q:"An innovator wants to create an app which can help teenagers and young kids to safely use social media. Match each type of assumption to the assumption to be validated.\nTypes: (a) Need (b) Technical (c) Production (d) Commercial\n(i) Enough parents are ready to subscribe and pay for such an app.\n(ii) There is demand for an app to monitor and facilitate safe use of social media by teenagers and young kids.\n(iii) There is expertise on child psychology and social media operations.\n(iv) App versions are available for different platforms like Android, iOS etc.",o:["a-ii, b-i, c-iii, d-iv","a-i, b-iv, c-ii, d-iii","a-ii, b-iii, c-iv, d-i","a-i, b-iii, c-iv, d-ii"],a:[2]},
+{w:3,q:"Statement I: A key component of experimentation in innovation is to get the desired results every time.\nStatement II: For successful validation of all the assumptions of an idea, designing a low-cost experiment is very crucial.",o:S2,a:[1]},
+{w:3,q:"The main hindrance in the path of experimentation to validate an innovative idea is:",o:["Low-cost experimental setup","To keep trying until desired results are achieved","The failure fallacy","All of the above"],a:[2]},
+{w:3,q:"Role/roles of an idea champion include:",o:["Building support for the new idea or technology","Help overcoming resistance","Make our idea sticky","All of the above"],a:[3]},
+{w:3,q:"Which of the following is NOT a requirement to make an idea sticky?",o:["Concrete","Concern","Curiosity","Credibility"],a:[1]},
+{w:3,q:"A team must counter high competition and dropping sales. Ajay suggests radical product-design changes but cannot communicate them convincingly. Sunil believes in the idea and helps overcome other members’ resistance. Team leader Jaya, with a strong hold in the organization, pushes the idea forward and makes people accept and work for it. Who is the idea champion?",o:["Ajay","Sunil","Jaya","All of the above"],a:[2]},
+{w:3,q:"Having a “coding club” in a college would be an example of:",o:["Learning environment","A team activity","Community of practice","A group of role models"],a:[2]},
+{w:3,q:"Which of the following could be ways of recognizing employees’ efforts and encouraging them to be innovative?",o:["Giving cash incentives to bring in new ideas","Putting up an employee’s photo as “Innovator of the Month”","Taking most idea givers on a holiday retreat","All of the above"],a:[3]},
+{w:3,q:"Statement I: Japanese organizations differentiate between value-added and non-value-added activities to become more efficient and create more value.\nStatement II: Value creation is at the core of any economic exchange.",o:S2,a:[2]},
+{w:3,q:"Which of the following statements is correct regarding co-creation?",o:["Co-creation is a linear process.","Lego creating a platform “Lego Ideas” inviting ideas and suggestions from over 1 million people where fans voted for the most popular ideas, would be an example of co-creation.","In the co-creation process the burden of value addition lies with the producer.","The concept of co-creation is only applicable in the service industry."],a:[1]},
+
+/* Week 4 */
+{w:4,q:"Select the correct statement/s.\nStatement 1: Business scenarios may never be directed by business models.\nStatement 2: The business scenario is directed by needs and integration or disintegration of people.",o:S4,a:[3]},
+{w:4,q:"Which of the following is NOT a quality deemed necessary in an entrepreneur?",o:["Analytical abilities and originality","Aptitude for Human Relations","Communication Skills","Physical appeal"],a:[3]},
+{w:4,q:"If a person organizes a business, manages a business, and takes risks, he best fits to be a/an:",o:["Actor","Doctor","Entrepreneur","Teacher"],a:[2]},
+{w:4,q:"Which among the following are the best examples of social entrepreneurship?",o:["Grameen Bank of Bangladesh","ITC Limited","Aravind Eye Hospital & Aurolab","Patanjali Ayurved","Study Hall Education Foundation"],a:[0,2,4]},
+{w:4,q:"Select the correct statement/s regarding social entrepreneurship.\nStatement 1: A social entrepreneur explores business opportunities that have a positive impact on their community, society, or the world.\nStatement 2: Social entrepreneurship involves a person or group who owns their own for-profit business.\nStatement 3: Developing and funding solutions that directly address social issues is known as social entrepreneurship.",o:["All the statements are true.","Statement 1 and Statement 3 are true, and Statement 2 is false.","Statement 1 is false, and Statement 2 and Statement 3 are true.","Statement 1 and Statement 2 are true, and Statement 3 is false."],a:[1]},
+{w:4,q:"Daniel Kahneman, psychologist and Nobel Prize winner in Economics, authored the bestseller:",o:["Start, Grow, and Run","The Innovator’s Dilemma","Thinking, Fast and Slow","Zero to One"],a:[2]},
+{w:4,q:"Which of the following is NOT an example of social entrepreneurship?",o:["Producing environmentally friendly products","Mass production of plastic bottles to turn a profit.","Providing banking services in underserved areas","Helping children orphaned by epidemic disease."],a:[1]},
+{w:4,q:"Which among the following is NOT a step in the six paths framework for formulating the blue ocean strategy?",o:["Look across alternative industries.","Look across strategic groups within industry.","Look across the chain of buyers.","Look across space."],a:[3]},
+{w:4,q:"What are the four steps of visualizing strategy?",o:["Visual Awakening, Visual Exploration, Visual Strategy Fair, Visual Communication","Stimulus, Sensor, Efferent, Response","Objectives, Formulation, Implementation, Evaluation and Control","Product, Place, Promotion, Price"],a:[0]},
+{w:4,q:"Identify the missing elements in the Four Actions Framework of the blue ocean strategy.\nEliminate → [ R ] → A New Value Curve ← Create, with the second [ R ] below.",o:["Reduce and Reuse","Reduce and Raise","Recycle and Recreate","Recycle and Raise"],a:[1]},
+
+/* Week 5 */
+{w:5,q:"Which of the following is correct?",o:["Engineering → Technology → Science","Science → Engineering → Technology","Science → Technology → Engineering","Technology → Engineering → Science"],a:[1]},
+{w:5,q:"Statement I: All scientific inventions lead to technological innovation.\nStatement II: Technological innovation is when an invention is transformed into a socially usable product.",o:S2,a:[1]},
+{w:5,q:"Which of the following is NOT true regarding technological innovation?",o:["It is about creating new use of the existing technology.","It is a complex process involving technological, social and economic factors.","It requires huge financial investments.","It takes a long period of time, sometimes decades, for such innovations to be impactful."],a:[0]},
+{w:5,q:"Which of the following are associated with the technological innovation process?\n(a) Basic research (b) Product development (c) Societal impact – positive and negative (d) Co-creation (e) Excluding existing knowledge (f) Scaling up (g) Trial and error (h) Experimentation",o:["(a), (b), (d), (f), (h)","(a), (b), (c), (d), (f)","(a), (b), (e), (f), (g)","(b), (d), (e), (f), (h)"],a:[0]},
+{w:5,q:"Match the types of technological innovation with examples.\nTypes: (a) Radical (b) Micro-radical (c) Generational (d) Incremental\nExamples: (i) Virtual trial rooms (ii) Smartphone camera enhancement (iii) Creation of world wide web (iv) Transition from 3G to 4G mobile network",o:["a-ii, b-i, c-iii, d-iv","a-i, b-iv, c-ii, d-iii","a-iii, b-i, c-iv, d-ii","a-iv, b-iii, c-i, d-ii"],a:[2]},
+{w:5,q:"Which of the following is NOT true?",o:["S-curve helps stakeholders anticipate the trajectory of a technology’s development and plan for future developments and challenges.","Incremental innovation involves short-term planning while micro-radical and generational innovation involve long-term planning.","Radical innovations are a rare phenomenon and are difficult to plan based on S-curve.","India majorly has 3rd generation companies where R&D planning is embedded in corporate and business planning."],a:[3]},
+{w:5,q:"Based on competitive impact, match the technology types with the statements.\nTypes: (a) Base (b) Key (c) Pacing (d) Emerging\n(i) Well embodied in products; basis of competitive advantage through differentiation.\n(ii) Already demonstrated ability to change the basis of competition; now moved to development stage.\n(iii) Ageing technology known to all participants; no competitive advantage because of widespread use.\n(iv) Forward-looking, early research stage, unknown but promising potential.",o:["a-i, b-ii, c-iii, d-iv","a-iii, b-i, c-ii, d-iv","a-iii, b-i, c-iv, d-ii","a-i, b-iii, c-ii, d-iv"],a:[1]},
+{w:5,q:"Which of the following statements are true for strategy?",o:["Offensive strategies help maintain the status quo and usually help expand the existing markets.","Absorbent strategies involve acquiring license to exploit innovation in domestic market.","Dependent strategies focus on developing core strategy with the parent company.","Imitative strategies are research intensive strategies."],a:[1]},
+{w:5,q:"Which of the following are technology forecasting tools?\n(a) Time series analysis (b) Morphological analysis (c) Delphi technique (d) Moving average (e) Pearl function based on S-curve (f) Envelope curve and trend extrapolation",o:["(a), (d), (e), (f)","(a), (b), (c), (e)","(b), (c), (e), (f)","(b), (d), (e), (f)"],a:[2]},
+{w:5,q:"Statement I: Technology forecasting is important for businesses to anticipate future technological developments, trends and innovations, and to develop strategies to take advantage of future opportunities and mitigate threats to the existing business.\nStatement II: These forecasting tools assist organizations in making informed decisions about research, development, investment, and strategic planning.",o:S2,a:[2]},
+
+/* Week 6 */
+{w:6,q:"Rubenstein’s definition: “Innovation is the process whereby new and improved ____________ are developed and transferred to a new plant or market where they are appropriate.”",o:["Products, processes, materials, and services","Goods and services","Idea, method, or device","Designs and business models"],a:[0]},
+{w:6,q:"Who gave the concept of the 5 Cs of insight development?",o:["Ratan Tata","Robenstein","Thomas Lockwood","Gary Klein"],a:[3]},
+{w:6,q:"Which example illustrates sustainable innovation the best?\nExample 1: Aravind Eye Care Hospital\nExample 2: Narayana Hrudayalaya (Narayana Health), an Indian chain of multi-specialty hospitals, heart centers and primary care facilities.",o:["Example 1","Example 2","Both a and b","None of the above"],a:[2]},
+{w:6,q:"Which of the following is an example of societal development with reference to sustainability?",o:["Aravind Eye Care Hospital","Narayana Hrudayalaya","River Narmada cleanliness drive named “Narmada ji ka Safai Abhiyan”","A grass-cutting machine that uses coal for energy"],a:[2]},
+{w:6,q:"Bar codes being used for inventory control fall under which Product/Process – Usage/Problem matrix category?",o:["Category 1 (New Product/Process – Old Usage/Problem)","Category 2 (Old Product/Process – Old Usage/Problem)","Category 3 (New Product/Process – New Usage/Problem)","Category 4 (Old Product/Process – New Usage/Problem)"],a:[2]},
+{w:6,q:"The limit of investment in plant and machinery for a medium organization is ____.",o:["Rs 10 lakh or 1 million","Rs 25 lakh or 2.5 million","Rs 5 crore or 50 million","Rs 10 crore or 100 million"],a:[3]},
+{w:6,q:"What does ASPIRE stand for?",o:["A Scheme for Promoting Innovation and Rural Entrepreneurship","A systematic plan to Implement Rural Entrepreneurship","A Single Point of Institutional Resource Entry","Asian School of Planning Innovation and Rural Entrepreneurship"],a:[0]},
+{w:6,q:"KVIC stands for:",o:["Khadi and Village Industries Committee","Kerala Village Innovation Council","Khadi Village Innovation Council","Knowledge Value Innovation Culture"],a:[0]},
+{w:6,q:"Which among these is an example of innovation resulting from social initiatives?",o:["Girl child friendly school infrastructure","Use of sustainable materials","Reduced expenses","Ability to meet growing demand"],a:[0]},
+{w:6,q:"Which among the following is a benefit of innovations resulting from environmental initiatives?",o:["The exploitation of local biodiversity","Reduction of environmental impact at the source (e.g., recovery of paper waste)","Use of non-sustainable materials such as single-use plastic","None of the above"],a:[1]},
+
+/* Week 7 */
+{w:7,q:"____________________ is the sum total of all the knowledge in an enterprise in the minds of its employees which can be used to create wealth.",o:["Intellectual Capital","Intellectual Asset","Intellectual Property","Knowledge-based resources"],a:[0]},
+{w:7,q:"Which of the following is correct regarding creation of intellectual capital?",o:["Purpose → Information → Knowledge → Strategy","Purpose → Strategy → Information → Knowledge","Information → Knowledge → Purpose → Strategy","Information → Purpose → Strategy → Knowledge"],a:[1]},
+{w:7,q:"Statement I: Intellectual assets are intellectual capital which is identified, documented and available to be shared and replicated within the organization.\nStatement II: A CRM software company has built a cutting-edge CRM application. The relationships developed with its customers are a valuable intellectual asset for the company.",o:S2,a:[0]},
+{w:7,q:"Intellectual Capital → Intellectual Assets → _____________________",o:["Patents","Knowledge-based Economy","Intellectual Property","Intellectual Ownership"],a:[2]},
+{w:7,q:"Statement I: Intellectual property rights and patents can be used interchangeably.\nStatement II: Legal protection of new creations leads to monopoly and discourages commitment of additional resources for further innovation.",o:S2,a:[3]},
+{w:7,q:"According to WIPO, the IPR system helps strike a balance between the interests of ______________ and _______________, providing an environment in which creativity and invention can flourish, for the benefit of all.",o:["Industry and public","Innovators and industry","Innovators and public","Industry and economy"],a:[2]},
+{w:7,q:"Match the type of IPR with the example.\nTypes: (a) Copyright (b) Patent (c) Trademark\nExamples: (i) A novelist’s original manuscript (ii) The “Nike” logo and brand name (iii) A pharmaceutical company obtaining the exclusive right to produce and sell a medication for a specified period",o:["a-i, b-ii, c-iii","a-i, b-iii, c-ii","a-ii, b-i, c-iii","a-iii, b-ii, c-i"],a:[1]},
+{w:7,q:"Which of the following falls into the IPR category?",o:["The distinctive design of a luxury car’s exterior, including its shape, curves, and exterior features","The secret recipe for a famous soft drink","Darjeeling Tea is a tea that can only be labeled as such if it originates from the Darjeeling region","All of the above"],a:[3]},
+{w:7,q:"A scientist develops a new biodegradable packaging material from agricultural waste fibers and biopolymers, a departure from conventional practice that also serves a practical purpose. To demonstrate its usefulness, she conducts a public seminar. Which is true in this scenario?",o:["The scientist will be given a patent for a limited period.","The scientist’s patent will be limited to the region she is residing in.","The scientist will not be getting any protection on her innovation.","None of the above."],a:[2]},
+{w:7,q:"Statement I: Copyright is a legal protection granted to the creators of original literary, artistic, and creative works. It gives creators exclusive rights to control how their works are used, reproduced, distributed, performed, or displayed.\nStatement II: Copyright is the protection of the original idea so that expression of that idea can be controlled.",o:S2,a:[0]},
+
+/* Week 8 */
+{w:8,q:"____________________ is a strategic framework that outlines how a company creates, delivers, and captures value in the market.",o:["Value proposition","Business Model","Business Strategy","Revenue Model"],a:[1]},
+{w:8,q:"An online fitness platform provides a convenient way for individuals to engage in fitness activities. Which components make up its business model?\n(a) Target customers (b) Value proposition (c) Competition (d) Revenue streams and costs (e) Key activities (f) Promotion and distribution channels (g) Government regulations (h) Review and feedback",o:["(a), (b), (d), (g), (h)","(a), (b), (c), (e), (f)","(a), (b), (d), (e), (f)","(b), (d), (e), (f), (h)"],a:[2]},
+{w:8,q:"Statement I: One major reason business models fail is when one or more elements of the model aren’t working as supposed.\nStatement II: A business’s inability to adapt to a dynamically changing environment and competitive landscape also leads to failure.",o:S2,a:[2]},
+{w:8,q:"Which of the following would be considered remedies to address the failures a business is facing?",o:["A futuristic approach where the business anticipates the features of products, services or processes desired by consumers.","Focusing on the areas of consideration to understand the symptoms of failure and eliminating the causes by choosing alternate courses of action.","Matching the capacity and capabilities with the value proposition.","All of the above"],a:[3]},
+{w:8,q:"Which of the following statements is NOT correct?",o:["Entrepreneurship is a chain of events creating, developing, and managing a business venture with the aim of identifying opportunities, taking calculated risks, and generating value.","Business incubators are supportive environments designed to nurture the growth and development of early-stage startups and entrepreneurs.","In practice, incubators provide handholding throughout the entire entrepreneurial journey from pre-founding stage to early development stage.","Incubators offer a range of resources, mentorship, and infrastructure to help startups overcome challenges, refine their business models, and accelerate their journey."],a:[2]},
+{w:8,q:"Which of the following is NOT a common feature of business incubators?",o:["Networking opportunities","Sole focus on established companies","Access to shared resources","Mentorship and expert guidance"],a:[1]},
+{w:8,q:"What is the usual time frame for startups to stay within a business incubator program?",o:["A few decades","A year or two","A few weeks","Indefinitely"],a:[1]},
+{w:8,q:"What is the primary source of funding for most startups in their early stages?",o:["Government grants","Angel investors","IPOs","Self"],a:[1]},
+{w:8,q:"Statement I: Debt financing is now also possible against intellectual property as collateral.\nStatement II: Debt financing is the first level of financing for startups; financing through equity follows in the later stages.",o:S2,a:[0]},
+{w:8,q:"Which of the following are key areas which require innovation and help create future markets?\n(a) Technology and digital transformation (b) Renewable energy and sustainability (c) Healthcare and biotechnology (d) Disaster management (e) Ed-tech (f) Fintech and financial inclusion (g) Agriculture and food security (h) Urbanization and smart cities (i) Defense",o:["(b), (c), (g)","(a), (d), (e), (f), (i)","Only (b) and (g)","(a), (b), (c), (d), (e), (f), (g), (h), (i)"],a:[3]}
+];
+// give every question an id and its number within the week
+(function(){const c={};Q.forEach(x=>{c[x.w]=(c[x.w]||0)+1;x.n=c[x.w];x.id=x.w+"-"+x.n;});})();
+
+/* ---------- Storage ---------- */
+const KEY="ibe_quiz_v1";
+let store={attempts:[],q:{}};
+try{const s=localStorage.getItem(KEY);if(s)store=JSON.parse(s);}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+
+/* ---------- Helpers ---------- */
+const $=id=>document.getElementById(id);
+const show=name=>{["dash","quiz","result"].forEach(s=>$(s).classList.toggle("hide",s!==name));window.scrollTo(0,0);};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+const shuffleArr=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+const letter=i=>String.fromCharCode(65+i);
+
+/* ---------- Dashboard ---------- */
+function weekAccuracy(w){
+  let c=0,t=0;
+  Q.filter(x=>x.w===w).forEach(x=>{const r=store.q[x.id];if(r){c+=r.c;t+=r.c+r.w;}});
+  return t?Math.round(100*c/t):null;
+}
+function renderDash(){
+  const at=store.attempts;
+  const pct=a=>Math.round(100*a.score/a.total);
+  const best=at.length?Math.max(...at.map(pct)):null;
+  const avg=at.length?Math.round(at.reduce((s,a)=>s+pct(a),0)/at.length):null;
+  const answered=Object.keys(store.q).length;
+  const missed=Q.filter(x=>store.q[x.id]&&store.q[x.id].last===0).length;
+  $("stats").innerHTML=[
+    [at.length,"Attempts"],
+    [best===null?"–":best+"%","Best score"],
+    [avg===null?"–":avg+"%","Average score"],
+    [answered+" / "+Q.length,"Questions seen"],
+    [missed,"Currently missed"]
+  ].map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+
+  const prev=new Set([...document.querySelectorAll("#weeks input:checked")].map(i=>+i.value));
+  const first=!document.querySelector("#weeks input");
+  $("weeks").innerHTML=Object.keys(WEEKS).map(k=>{
+    const w=+k,acc=weekAccuracy(w);
+    const checked=first||prev.has(w)?"checked":"";
+    return `<label class="week"><input type="checkbox" value="${w}" ${checked}><span class="t">Week ${w}</span>
+      <span class="n">${esc(WEEKS[w])} · ${acc===null?"not attempted":acc+"% correct"}</span>
+      <div class="bar"><i style="width:${acc||0}%"></i></div></label>`;
+  }).join("");
+
+  $("history").innerHTML=at.length?
+    `<table><tr><th>Date</th><th>Weeks</th><th>Score</th><th>Time</th></tr>`+
+    at.slice(-8).reverse().map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.weeks)}</td><td>${a.score}/${a.total} (${pct(a)}%)</td><td>${fmt(a.secs)}</td></tr>`).join("")+`</table>`
+    :`<p class="sub" style="margin:0">No attempts yet. Pick your weeks and start a quiz.</p>`;
+}
+const selectedWeeks=()=>[...document.querySelectorAll("#weeks input:checked")].map(i=>+i.value);
+$("allBtn").onclick=()=>document.querySelectorAll("#weeks input").forEach(i=>i.checked=true);
+$("noneBtn").onclick=()=>document.querySelectorAll("#weeks input").forEach(i=>i.checked=false);
+$("resetBtn").onclick=()=>{if(confirm("Delete all saved attempts and progress?")){store={attempts:[],q:{}};save();renderDash();}};
+
+$("startBtn").onclick=()=>{
+  const ws=selectedWeeks();
+  if(!ws.length){$("startMsg").textContent="Select at least one week.";return;}
+  $("startMsg").textContent="";
+  let list=Q.filter(x=>ws.includes(x.w));
+  if($("shuffle").checked)list=shuffleArr(list);
+  const n=+$("count").value;
+  if(n&&n<list.length)list=list.slice(0,n);
+  startQuiz(list,ws.length===8?"All weeks":"Week "+ws.join(", "));
+};
+$("missedBtn").onclick=()=>{
+  const list=Q.filter(x=>store.q[x.id]&&store.q[x.id].last===0);
+  if(!list.length){$("startMsg").textContent="No missed questions yet.";return;}
+  $("startMsg").textContent="";
+  startQuiz($("shuffle").checked?shuffleArr(list):list,"Missed questions");
+};
+
+/* ---------- Quiz ---------- */
+let run=null,tick=null;
+function startQuiz(list,label){
+  run={list,i:0,res:[],label,t0:Date.now(),locked:false};
+  clearInterval(tick);
+  tick=setInterval(()=>{$("timer").textContent=fmt(Math.floor((Date.now()-run.t0)/1000));},1000);
+  $("timer").textContent="0:00";
+  show("quiz");renderQ();
+}
+function renderQ(){
+  const q=run.list[run.i],multi=q.a.length>1;
+  run.locked=false;
+  $("qCount").textContent=`Question ${run.i+1} of ${run.list.length}`;
+  $("progBar").style.width=(100*run.i/run.list.length)+"%";
+  const type=multi?"checkbox":"radio";
+  $("qCard").classList.remove("locked");
+  $("qCard").innerHTML=`<span class="tag">Week ${q.w}</span>
+    <p class="qtext">${esc(q.q)}</p>
+    <p class="hint">${multi?"Select all that apply.":"Select one answer."}</p>
+    ${q.o.map((o,i)=>`<label class="opt" data-i="${i}"><input type="${type}" name="o" value="${i}"><span><b>${letter(i)}.</b> ${esc(o)}</span></label>`).join("")}
+    <div id="fb"></div>`;
+  $("actBtn").textContent=$("instant").checked?"Check answer":(run.i===run.list.length-1?"Finish":"Next");
+  $("actBtn").disabled=false;
+}
+function picked(){return [...document.querySelectorAll("#qCard input:checked")].map(i=>+i.value);}
+function record(q,sel){
+  const ok=sameSet(sel,q.a);
+  run.res.push({q,sel,ok});
+  const r=store.q[q.id]||{c:0,w:0,last:null};
+  if(ok)r.c++;else r.w++;
+  r.last=ok?1:0;store.q[q.id]=r;
+  return ok;
+}
+$("actBtn").onclick=()=>{
+  const q=run.list[run.i];
+  if(!run.locked){
+    const sel=picked();
+    if(!sel.length){$("fb").innerHTML=`<p class="fb no">Pick an answer first.</p>`;return;}
+    const ok=record(q,sel);
+    if($("instant").checked){
+      run.locked=true;
+      $("qCard").classList.add("locked");
+      document.querySelectorAll("#qCard .opt").forEach(l=>{
+        const i=+l.dataset.i;l.querySelector("input").disabled=true;
+        if(q.a.includes(i))l.classList.add("correct");
+        else if(sel.includes(i))l.classList.add("wrong");
+      });
+      $("fb").innerHTML=ok?`<p class="fb ok">Correct.</p>`:`<p class="fb no">Incorrect. Correct: ${q.a.map(letter).join(", ")}.</p>`;
+      $("actBtn").textContent=run.i===run.list.length-1?"Finish":"Next question";
+      return;
+    }
+  }
+  next();
+};
+function next(){
+  run.i++;
+  if(run.i>=run.list.length)finish();else renderQ();
+}
+$("quitBtn").onclick=()=>{if(confirm("Quit this quiz? Answers already given are kept in your progress.")){clearInterval(tick);save();renderDash();show("dash");}};
+
+/* ---------- Results ---------- */
+let lastMissed=[];
+function finish(){
+  clearInterval(tick);
+  const secs=Math.floor((Date.now()-run.t0)/1000);
+  const score=run.res.filter(r=>r.ok).length,total=run.res.length;
+  store.attempts.push({date:new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}),weeks:run.label,score,total,secs});
+  save();
+  $("rScore").textContent=`${score} / ${total}  (${Math.round(100*score/total)}%)`;
+  $("rMeta").textContent=`${run.label} · ${fmt(secs)}`;
+  const by={};
+  run.res.forEach(r=>{const b=by[r.q.w]||(by[r.q.w]={c:0,t:0});b.t++;if(r.ok)b.c++;});
+  $("rWeeks").innerHTML=`<tr><th>Week</th><th>Topic</th><th>Correct</th></tr>`+
+    Object.keys(by).map(w=>`<tr><td>${w}</td><td>${esc(WEEKS[w])}</td><td>${by[w].c} / ${by[w].t}</td></tr>`).join("");
+  lastMissed=run.res.filter(r=>!r.ok).map(r=>r.q);
+  $("againBtn").disabled=!lastMissed.length;
+  $("review").innerHTML=run.res.map((r,k)=>`<div class="rev">
+    <small>Q${k+1} · Week ${r.q.w}</small>
+    <div class="qtext" style="font-size:1rem">${esc(r.q.q)}</div>
+    <div class="${r.ok?"ok-t":"no-t"}"><b>${r.ok?"Correct":"Incorrect"}</b></div>
+    <div>Your answer: ${r.sel.map(i=>letter(i)+". "+esc(r.q.o[i])).join("; ")}</div>
+    ${r.ok?"":`<div>Correct answer: ${r.q.a.map(i=>letter(i)+". "+esc(r.q.o[i])).join("; ")}</div>`}
+  </div>`).join("");
+  show("result");
+}
+$("againBtn").onclick=()=>{if(lastMissed.length)startQuiz(shuffleArr(lastMissed),"Missed questions");};
+$("homeBtn").onclick=()=>{renderDash();show("dash");};
+
+renderDash();
+</script>
+</body>
+</html>
